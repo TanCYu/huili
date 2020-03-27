@@ -1,7 +1,6 @@
 import ashx from '@/assets/js/ashx'
 import request from '@/assets/js/request'
 import tools from '@/assets/js/tools'
-import base from '@/assets/api/base'
 
 
 //获取用户权限下可查看的分店
@@ -32,10 +31,6 @@ export function queryOrderData(obj){
   })
 }
 
-
-
-
-
 //汇总统计下 各分店排行
 export function getLineReport(p) {
   return request({
@@ -44,3 +39,21 @@ export function getLineReport(p) {
     data: p
   })
 };
+
+// 我的品牌列表
+export function investBrand(){
+  return ashx({
+    url: '/WebService2/Brand/Brand.ashx?action=BrandListByInvestment',
+    method: 'post',
+    data: tools.createParms()
+  })
+}
+
+//计算器计算
+export function investCount(obj){
+  return ashx({
+    url: '/WebService2/Investment/Investment.ashx?action=CapitalCalculation',
+    method: 'post',
+    data: tools.createParms(obj)
+  })
+}

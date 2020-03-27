@@ -2,7 +2,12 @@
   <div class="echarts">
     <div class="section-wrap">
       <div class="section">
-        <div class="title" style="margin-bottom:20px">{{comData.title}}</div>
+        <div class="title row pcenter" style="justify-content:space-between;margin-bottom:20px">
+          <span>{{comData.title}}</span>
+          <div class="collasp pcenter" @click="showDetail = !showDetail">
+            <span class="pcenter">明 细</span>
+          </div>
+        </div>
         <div class="canvas" :style="{height:height}">
           <ve-pie
             :data="comData.chartData"
@@ -12,7 +17,7 @@
             :tooltip="tooltip"
           ></ve-pie>
         </div>
-        <div class="chart" v-show="show">
+        <div class="chart" v-show="showDetail">
           <div class="row row1 pcenter" style="height:50px">
             <div class style="flex:1">{{comData.tableTitle1}}</div>
             <div class="" style="width:120px;padding-left:16px">{{comData.tableTitle2}}</div>
@@ -49,7 +54,7 @@ export default {
   },
   data() {
     return {
-      show: true,
+      showDetail:false,
       chartSettings: {
         radius: this.radius
       },
@@ -109,13 +114,25 @@ export default {
             border-bottom: 1px solid #f0f0f0;
             font-size: 16px;
             font-weight: 600;
+            .collasp{
+              width:60px;
+              height:30px;
+              span{
+                display: block;
+                padding:3px 8px;
+                background-color:#FFE002;
+                font-size:15px;
+                border-radius:4px;
+                color:#333;
+              }
+            }
         }
         .canvas {
             overflow: hidden;
         }
        .chart {
            transform: translateY(-10px);
-          margin: 0 10px 10px;
+          margin: 0 10px;
             .row1 {
                 background-color:#eaeaea;
                 >div{

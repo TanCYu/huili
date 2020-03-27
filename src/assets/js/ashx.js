@@ -25,7 +25,14 @@ service.interceptors.request.use(
 )
 // 请求
 service.interceptors.response.use(
-  response => JSON.parse(response.data.Message),
+  response => {
+    if(response.data.State=='error'){
+      Toast.fail(response.data.Message)
+      return Promise.reject(response.data.State)
+    }else{
+      return Promise.resolve(JSON.parse(response.data.Message))
+    }
+  },
   error => {
     Toast.fail(error.message);
     return Promise.reject(error)

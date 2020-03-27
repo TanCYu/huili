@@ -15,12 +15,18 @@
       </div>
     </div>
     <div class="query row pcenter">
-      <div class="pcenter" @click="query">
-        <span class>查 询</span>
-      </div>
+      <Button
+        :disabled="isload"
+        class="btn"
+        color="#ffe002"
+        @click="query"
+        :loading="isload"
+        type="info"
+        loading-text="加载中..."
+      >查 询</Button>
     </div>
     <!-- section -->
-    <div class="section-wrap" style="">
+    <div class="section-wrap" style>
       <!-- 当月目标 -->
       <div class="section" style="margin-bottom:10px">
         <div class="title">当月目标</div>
@@ -82,9 +88,13 @@
         <div class="count row" v-if="lineshow">
           <div class="count-son column" v-for="(item,index) in initJson.DeviceList" :key="index">
             <div class="sum">{{item.VisitCount?item.VisitCount:0}}</div>
-            <div class="row count-name pcenter">
-              <img src alt class />
-              <div class>{{item.DeviceName}}</div>
+            <div class="row count-name pcenter" style="padding-left:12px">
+              <div
+                class="iconfont icon-zhaji"
+                style="width:20px;font-size:18px;margin-right:4px"
+                :style="{color:(item.DeviceState?'green':'red')}"
+              ></div>
+              <div class style="flex:1">{{item.DeviceName}}</div>
             </div>
           </div>
         </div>
@@ -121,13 +131,13 @@
         <div class style="height:10px"></div>
       </div>
     </div>
-    <saleRank v-show="!lineshow" :data="saleRankData" ></saleRank>
-    <peopleflowRank style="margin-top:10px" v-show="!lineshow" :data="peopleFlowData"></peopleflowRank>
-    <unitpriceCount style="margin-top:10px" v-show="!lineshow" :data="preCustomData"></unitpriceCount>
-    <brandCount style="margin-top:10px" :data="brandData"></brandCount>
-    <cateCount :data="classifyData"></cateCount>
-    <orderCount :data="orderData"></orderCount>
-    <rebuyCount :data="rebuyData"></rebuyCount>
+    <saleRank style="margin-bottom:10px" v-show="!lineshow" :data="saleRankData"></saleRank>
+    <peopleflowRank style="margin-bottom:10px" v-show="!lineshow" :data="peopleFlowData"></peopleflowRank>
+    <unitpriceCount style="margin-bottom:10px" v-show="!lineshow" :data="preCustomData"></unitpriceCount>
+    <brandCount style="margin-bottom:10px" :data="brandData"></brandCount>
+    <cateCount style="margin-bottom:10px" :data="classifyData"></cateCount>
+    <orderCount style="margin-bottom:10px" :data="orderData"></orderCount>
+    <rebuyCount style="margin-bottom:10px" :data="rebuyData"></rebuyCount>
     <!-- ======picker======== -->
     <Popup class v-model="show1" position="bottom" :style="{ height: '40%' }">
       <picker
@@ -146,7 +156,7 @@
         @confirm="onConfirm2"
         :formatter="formatter"
         :min-date="minDate"
-        :max-date="maxDate"
+        :max-date="currentDate2"
       />
     </Popup>
     <Popup class v-model="show3" position="bottom" :style="{ height: '40%' }">
@@ -156,7 +166,6 @@
         @cancel="show3= false"
         @confirm="onConfirm3"
         :formatter="formatter"
-        :min-date="minDate"
         :max-date="maxDate"
       />
     </Popup>
@@ -172,7 +181,7 @@ import rebuyCount from "./rebuyCount";
 import unitpriceCount from "./unitpriceCount";
 import loadd from "./loadd";
 import base from "@/assets/api/base";
-import { Toast } from "vant";
+import { Toast, Button } from "vant";
 import common from "@/assets/js/common";
 import tools from "@/assets/js/tools";
 import {
@@ -184,15 +193,31 @@ import {
 import { Popup, picker, DatetimePicker, Progress } from "vant";
 export default {
   name: "orgStatisticsNew",
-  components: {peopleflowRank ,saleRank , unitpriceCount , rebuyCount ,orderCount , brandCount,cateCount, loadd, Popup, picker, DatetimePicker, Progress },
+  components: {
+    Button,
+    peopleflowRank,
+    saleRank,
+    unitpriceCount,
+    rebuyCount,
+    orderCount,
+    brandCount,
+    cateCount,
+    loadd,
+    Popup,
+    picker,
+    DatetimePicker,
+    Progress
+  },
   data() {
     return {
+      isload: true,
       show1: false,
       show2: false,
       show3: false,
       orgList: [], //店铺列表
       curOrgName: "分店汇总", //当前店铺名
       curOrgOID: 0, //当前店铺id
+      oidStr: "",
       startYear: 2018,
       endYear: 2030,
       minDate: new Date(2018, 0, 1),
@@ -205,23 +230,23 @@ export default {
       lineshow: false, //false 所有店铺 。 true 单个店铺 闸机列表是否
       brandData: {
         tableData: [],
-        chartData: [],
+        chartData: []
       },
       classifyData: {
         tableData: [],
-        chartData: [],
+        chartData: []
       },
       orderData: {
         tableData: [],
-        chartData: [],
+        chartData: []
       },
       rebuyData: {
         tableData: [],
-        chartData: [],
+        chartData: []
       },
-      preCustomData:[],//客单价统计
-      saleRankData:[],
-      peopleFlowData:[]
+      preCustomData: [], //客单价统计
+      saleRankData: [],
+      peopleFlowData: []
     };
   },
   created() {
@@ -238,6 +263,10 @@ export default {
         tools.timer().dateO.d
       );
       this.getPermitOrgOID();
+      Toast.loading({
+        message: "加载中...",
+        forbidClick: true
+      });
     },
     formatter(type, value) {
       if (type === "year") {
@@ -264,6 +293,11 @@ export default {
             return false;
           }
           this.orgList = data;
+          let arr = [];
+          data.forEach(v => {
+            arr.push(v.OrgOID);
+          });
+          this.oidStr = arr.join(",");
           this.orgList.unshift({ OrgOID: "0", OrgName: "分店汇总" });
           this.curOrgName = this.orgList[0].OrgName;
           this.curOrgOID = this.orgList[0].OrgOID;
@@ -274,6 +308,33 @@ export default {
     },
     //搜索==点击查询
     query() {
+      let sa = this.dateStart.split(" ");
+      let se = this.dateEnd.split(" ");
+      let startTime = Number(
+        sa[0].split("-")[0] +
+          sa[0].split("-")[1] +
+          sa[0].split("-")[2] +
+          sa[1].split(":")[0] +
+          sa[1].split(":")[1]
+      );
+      let endTime = Number(
+        se[0].split("-")[0] +
+          se[0].split("-")[1] +
+          se[0].split("-")[2] +
+          se[1].split(":")[0] +
+          se[1].split(":")[1]
+      );
+      console.log(startTime);
+      console.log(endTime);
+      if (startTime > endTime) {
+        Toast("开始时间不能大于结束时间");
+        return false;
+      }
+      Toast.loading({
+        message: "加载中...",
+        forbidClick: true
+      });
+      this.isload = true;
       if (this.curOrgOID != 0) {
         this.getOrgOrder();
       } else {
@@ -288,35 +349,47 @@ export default {
         dateStart: this.dateStart,
         dateEnd: this.dateEnd
       };
-      getStatisticsSumAll(obj).then(data => {
-        this.initJson = data;
-        this.lineshow = false;
-        this.handleBrandData(data);
-        this.handCateData(data);
-      }).then(()=>{
-        this.getLineReport()
-      }).then(()=>{
-        this.getOrderData()
-      }).then(()=>{
-        this.getRebuyData()
-      })
+      getStatisticsSumAll(obj)
+        .then(data => {
+          this.initJson = data;
+          this.lineshow = false;
+          this.handleBrandData(data);
+          this.handCateData(data);
+        })
+        .then(() => {
+          this.getLineReport();
+        })
+        .then(() => {
+          this.getOrderData();
+        })
+        .then(() => {
+          this.getRebuyData();
+        })
+        .catch(() => {
+          this.isload = false;
+        });
     },
-    getLineReport(){
+    getLineReport() {
       let obj = {
         beginTime: this.dateStart,
         endTime: this.dateEnd,
-        orgOID: this.curOrgOID,
+        orgOID: this.oidStr,
         appid: base.gAppid
       };
-      getLineReport(obj).then(data => {
-        console.log(data);
-        if(data.data){
-          this.querySumStoreSucc(data)
-        }
-      });
+      getLineReport(obj)
+        .then(data => {
+          console.log(data);
+          if (data.data) {
+            this.querySumStoreSucc(data);
+          }
+        })
+        .catch(() => {
+          this.isload = false;
+        });
     },
     // ====单个仓 api====
-    getOrgOrder(){//订单统计 单个仓统计
+    getOrgOrder() {
+      //订单统计 单个仓统计
       let p = {
         action: "mpGetOrgStatisticsOrder",
         OrgOID: this.curOrgOID,
@@ -324,32 +397,41 @@ export default {
         dateEnd: this.dateEnd,
         appid: base.gAppid
       };
-      getStatisticsSumAll(p).then(data => {
-        this.initJson.TargetAmount = data.TargetAmount;
-        this.initJson.AlreadyAmount = data.AlreadyAmount;
-        this.initJson.TargetPercent = data.TargetPercent;
-        this.initJson.TargetAmountPerDay = data.TargetAmountPerDay;
-        this.initJson.AlreadyAmountPerDay = data.AlreadyAmountPerDay;
-        this.initJson.TargetPercentPerDay = data.TargetPercentPerDay;
-        this.initJson.OrderOfflinePriceSale = data.OrderOfflinePriceSale;
-        this.initJson.OrderSkuCount = data.OrderSkuCount;
-        this.initJson.OrderOfflineCount = data.OrderOfflineCount;
-        this.initJson.PurchaseRate = data.PurchaseRate;
-        this.initJson.OrderAvgPrice = data.OrderAvgPrice;
-        this.initJson.OrderAvgCount = data.OrderAvgCount;
-        this.handleBrandData(data);
-        this.handCateData(data);
-      }).then(()=>{
-        this.getGateCount()
-      }).then(()=>{
-        this.getCateAll()
-      }).then(()=>{
-        this.getOrderData()
-      }).then(()=>{
-        this.getRebuyData()
-      })
+      getStatisticsSumAll(p)
+        .then(data => {
+          this.initJson.TargetAmount = data.TargetAmount;
+          this.initJson.AlreadyAmount = data.AlreadyAmount;
+          this.initJson.TargetPercent = data.TargetPercent;
+          this.initJson.TargetAmountPerDay = data.TargetAmountPerDay;
+          this.initJson.AlreadyAmountPerDay = data.AlreadyAmountPerDay;
+          this.initJson.TargetPercentPerDay = data.TargetPercentPerDay;
+          this.initJson.OrderOfflinePriceSale = data.OrderOfflinePriceSale;
+          this.initJson.OrderSkuCount = data.OrderSkuCount;
+          this.initJson.OrderOfflineCount = data.OrderOfflineCount;
+          this.initJson.PurchaseRate = data.PurchaseRate;
+          this.initJson.OrderAvgPrice = data.OrderAvgPrice;
+          this.initJson.OrderAvgCount = data.OrderAvgCount;
+          this.handleBrandData(data);
+          this.handCateData(data);
+        })
+        .then(() => {
+          this.getGateCount();
+        })
+        .then(() => {
+          this.getCateAll();
+        })
+        .then(() => {
+          this.getOrderData();
+        })
+        .then(() => {
+          this.getRebuyData();
+        })
+        .catch(() => {
+          this.isload = false;
+        });
     },
-    getGateCount() {//访问统计 闸机统计接口
+    getGateCount() {
+      //访问统计 闸机统计接口
       let obj = {
         action: "mpGetOrgStatisticsGate",
         OrgOID: this.curOrgOID,
@@ -357,14 +439,19 @@ export default {
         dateEnd: this.dateEnd,
         appid: base.gAppid
       };
-      getStatisticsSumAll(obj).then(data => {
-        this.initJson.UserVisiteOfflineCount = data.UserVisiteOfflineCount;
-        this.initJson.UserRealCount = data.UserRealCount;
-        this.initJson.UserNewCount = data.UserNewCount;
-        this.lineshow = true;
-      })
+      getStatisticsSumAll(obj)
+        .then(data => {
+          this.initJson.UserVisiteOfflineCount = data.UserVisiteOfflineCount;
+          this.initJson.UserRealCount = data.UserRealCount;
+          this.initJson.UserNewCount = data.UserNewCount;
+          this.lineshow = true;
+        })
+        .catch(() => {
+          this.isload = false;
+        });
     },
-    getCateAll() {//访问统计 闸机设备统计接口
+    getCateAll() {
+      //访问统计 闸机设备统计接口
       let p = {
         action: "mpGetOrgStatisticsEquipment",
         OrgOID: this.curOrgOID,
@@ -372,12 +459,27 @@ export default {
         dateEnd: this.dateEnd,
         appid: base.gAppid
       };
-      getStatisticsSumAll(p).then(data => {
-        this.initJson.DeviceList = data.DeviceList
-      });
+      getStatisticsSumAll(p)
+        .then(data => {
+          data.DeviceList.forEach(v => {
+            let date1 = common.JSONDateToDateStr(v.TimeHeartLast);
+            let date2 = common.JSONDateToDateStr(v.TimeNow);
+            let second = common.getSecondByTowDate(date1, date2);
+            if (second > 60) {
+              v.DeviceState = false; //设备异常
+            } else {
+              v.DeviceState = true; //设备正常
+            }
+          });
+          this.initJson.DeviceList = data.DeviceList;
+        })
+        .catch(() => {
+          this.isload = false;
+        });
     },
     // ====公用====
-    getOrderData(){//用户消费订单金额分布接口
+    getOrderData() {
+      //用户消费订单金额分布接口
       let p = {
         action: "GetUserOrderF",
         OrgOID: this.curOrgOID,
@@ -385,11 +487,15 @@ export default {
         dateEnd: this.dateEnd,
         appid: base.gAppid
       };
-      queryOrderData(p).then(data => {
-        this.handleOrderData(data)
-      });
+      queryOrderData(p)
+        .then(data => {
+          this.handleOrderData(data);
+        })
+        .catch(() => {
+          this.isload = false;
+        });
     },
-    getRebuyData(){
+    getRebuyData() {
       let p = {
         action: "getUserBuyRate",
         OrgOID: this.curOrgOID,
@@ -397,9 +503,15 @@ export default {
         dateEnd: this.dateEnd,
         appid: base.gAppid
       };
-      queryOrderData(p).then(data => {
-        this.handleRebuyData(data)
-      });
+      queryOrderData(p)
+        .then(data => {
+          Toast.clear();
+          this.isload = false;
+          this.handleRebuyData(data);
+        })
+        .catch(() => {
+          this.isload = false;
+        });
     },
     // ===============================
     // 选择分店
@@ -422,76 +534,135 @@ export default {
     },
     onChange(picker, value, index) {},
     //--chart 数据操作
-    handleBrandData(data){
-      if(!data.SaleListGroupByBrand){
-        this.brandData={
+    handleBrandData(data) {
+      if (!data.SaleListGroupByBrand) {
+        this.brandData = {
           tableData: [],
           chartData: []
         };
-        return false
-      };
-      let pieChartData = this.handleChartData(data.SaleListGroupByBrand, 'BrandName', 'SkuPriceSummary')
-      let tableData = this.handleTableData(data.SaleListGroupByBrand,'BrandName','SkuPriceSummary','SkuCountSummary')
+        return false;
+      }
+      let pieChartData = this.handleChartData(
+        data.SaleListGroupByBrand,
+        "BrandName",
+        "SkuPriceSummary"
+      );
+      let tableData = this.handleTableData(
+        data.SaleListGroupByBrand,
+        "BrandName",
+        "SkuPriceSummary",
+        "SkuCountSummary"
+      );
       let obj = {
         tableData: tableData,
         chartData: pieChartData
-      }
-      this.brandData = obj
+      };
+      this.brandData = obj;
     },
     handCateData(data) {
-       if(!data.SaleListGroupByCategory){
-        this.classifyData={
+      if (!data.SaleListGroupByCategory) {
+        this.classifyData = {
           tableData: [],
           chartData: []
         };
-        return false
+        return false;
+      }
+      let pieChartData = this.handleChartData(
+        data.SaleListGroupByCategory,
+        "CategoryName",
+        "SkuPriceSummary"
+      );
+      let tableData = this.handleTableData(
+        data.SaleListGroupByCategory,
+        "CategoryName",
+        "SkuPriceSummary",
+        "SkuCountSummary"
+      );
+      let obj = {
+        tableData: tableData,
+        chartData: pieChartData
       };
-      let pieChartData = this.handleChartData(data.SaleListGroupByCategory, 'CategoryName', 'SkuPriceSummary')
-      let tableData = this.handleTableData(data.SaleListGroupByCategory,'CategoryName','SkuPriceSummary','SkuCountSummary')
-      let obj = {
-        tableData: tableData,
-        chartData: pieChartData
-      }
-      this.classifyData = obj
+      this.classifyData = obj;
     },
-    handleOrderData(data){
+    handleOrderData(data) {
       let pieChartList = data;
-      let pieChartData = this.handleChartData(pieChartList, 'stepContent', 'count')
+      let pieChartData = this.handleChartData(
+        pieChartList,
+        "stepContent",
+        "count"
+      );
       let tableList = data;
-      tableList.forEach((item)=>{
+      tableList.forEach(item => {
         item.rate = (item.rate * 100).toFixed(2);
-      })
-      let tableData = this.handleTableData(tableList,'stepContent','count','rate')
+      });
+      let tableData = this.handleTableData(
+        tableList,
+        "stepContent",
+        "count",
+        "rate"
+      );
       let obj = {
         tableData: tableData,
         chartData: pieChartData
-      }
-      this.orderData = obj
+      };
+      this.orderData = obj;
     },
     handleRebuyData(data, nameProp, valProp) {
-      let pieChartData = this.handleChartData(data, 'count', 'userCount')
-      let tableData = this.handleTableData(data,'count','userCount','userName')
+      let pieChartData = this.handleChartData(data, "count", "userCount");
+      let tableData = this.handleTableData(
+        data,
+        "count",
+        "userCount",
+        "userName"
+      );
       let obj = {
         tableData: tableData,
         chartData: pieChartData
-      }
-      this.rebuyData = obj
+      };
+      this.rebuyData = obj;
     },
     querySumStoreSucc(data) {
       let saleRankList = data.data;
-      let chartList = data.data
-      let peopleFlowList = common.arraySort(data.data, 'UserVisitOfflineCount', "desc");
+      let chartList = data.data;
+      let peopleFlowList = common.arraySort(
+        data.data,
+        "UserVisitOfflineCount",
+        "desc"
+      );
       let totolVisit = 0;
       peopleFlowList.forEach(ele => {
-        ele.showVisit = (Number(ele.UserVisitOfflineCount) / Number(peopleFlowList[0].UserVisitOfflineCount)).toFixed(4) * 100 + "%";
+        ele.showVisit =
+          (
+            Number(ele.UserVisitOfflineCount) /
+            Number(peopleFlowList[0].UserVisitOfflineCount)
+          ).toFixed(4) *
+            100 +
+          "%";
         totolVisit += Number(ele.UserVisitOfflineCount);
-      })
+      });
       peopleFlowList.forEach(ele => {
-        ele.avgVisitCount = ((Number(ele.UserVisitOfflineCount) / Number(totolVisit)) * 100).toFixed(2);
-      })
-      let arr1 = this.handleProgressData(saleRankList, 'OrgName', 'TotlePriceSum', 'SalePercentage');
-      let arr2 = this.handleProgressData(peopleFlowList, 'OrgName', 'UserVisitOfflineCount', 'avgVisitCount');
-      let chartData = this.handlePrecustomData(chartList, 'OrgName', 'OrderPriceAverage')
+        ele.avgVisitCount = (
+          (Number(ele.UserVisitOfflineCount) / Number(totolVisit)) *
+          100
+        ).toFixed(2);
+      });
+      let arr1 = this.handleProgressData(
+        saleRankList,
+        "OrgName",
+        "TotlePriceSum",
+        "SalePercentage"
+      );
+      let arr2 = this.handleProgressData(
+        peopleFlowList,
+        "OrgName",
+        "UserVisitOfflineCount",
+        "avgVisitCount"
+      );
+      let chartData = this.handlePrecustomData(
+        chartList,
+        "OrgName",
+        "OrderPriceAverage"
+      );
       this.saleRankData = arr1;
       this.peopleFlowData = arr2;
       this.preCustomData = chartData;
@@ -525,58 +696,60 @@ export default {
         }
       }
       let chartDataList = pieChartData;
-      let columns = ['name', 'data']
-      let rows = []
-      for(let i = 0; i < chartDataList.length; i++){
+      let columns = ["name", "data"];
+      let rows = [];
+      for (let i = 0; i < chartDataList.length; i++) {
         let eleObj = {
-          'name': chartDataList[i].name,
-          'data': chartDataList[i].data
-        }
+          name: chartDataList[i].name,
+          data: chartDataList[i].data
+        };
         rows.push(eleObj);
       }
       let chartobj = {
         columns: columns,
         rows: rows
-      }
+      };
       let chartData = chartobj;
       return chartData;
     },
-    handleTableData(data, prop1, prop2, prop3){
+    handleTableData(data, prop1, prop2, prop3) {
       let tableData = [];
-      for(let i = 0; i < data.length; i++){
+      for (let i = 0; i < data.length; i++) {
         let item = data[i];
         let obj = {
           val1: item[prop1],
           val2: item[prop2],
           val3: item[prop3]
-        }
+        };
         tableData.push(obj);
       }
       return tableData;
     },
-    handleProgressData(data, nameProp, valProp, rateProp){
+    handleProgressData(data, nameProp, valProp, rateProp) {
       let progressData = common.arraySort(data, valProp, "desc");
-      let progressList = []
-      progressData.forEach(ele=>{
+      let progressList = [];
+      progressData.forEach(ele => {
         let item = {};
-        item.rateVal = (Number(ele[valProp]) / Number(progressData[0][valProp])).toFixed(4) * 100;
+        item.rateVal =
+          (Number(ele[valProp]) / Number(progressData[0][valProp])).toFixed(4) *
+          100;
         item.val1 = ele[nameProp];
         item.val2 = ele[valProp];
         item.val3 = ele[rateProp];
-        progressList.push(item)
-      })
+        progressList.push(item);
+      });
       return progressList;
     },
-    handlePrecustomData(data, nameProp, valProp){
+    handlePrecustomData(data, nameProp, valProp) {
       let chartData = common.arraySort(data, valProp, "desc");
       let list = [];
-      chartData.forEach(ele=>{
+      chartData.forEach(ele => {
         let obj = {
-          '仓库名称': ele[nameProp],
-          '客单价(元)': ele[valProp]
-        }
+          仓库名称: ele[nameProp],
+          "客单价(元)": ele[valProp]
+        };
         list.push(obj);
-      })
+      });
       return list;
     }
     //===
@@ -609,20 +782,25 @@ export default {
         color: #666;
         font-weight: 400;
         font-size: 16px;
+        .van-loading__circular {
+          color: #333 !important;
+        }
       }
     }
   }
   .query {
     height: 90px;
-    div {
+    .btn {
       width: 80%;
       height: 34px;
       border-radius: 15px;
       background-color: #ffe002;
-      color: black;
+      color: black !important;
       box-shadow: 0 0 5px #bcbcbc;
+      font-size: 16px;
+      line-height: 34px;
       span {
-        font-size: 16px;
+        color: #000;
         font-weight: 500;
       }
     }
@@ -672,7 +850,10 @@ export default {
         flex-wrap: wrap;
         .count-son {
           width: 33.33%;
-          margin-bottom: 10px;
+          padding-bottom: 5px;
+          padding-top: 5px;
+          border-bottom: 0.5px solid #eaeaea;
+          border-right: 0.5px solid #eaeaea;
           .sum {
             height: 20px;
             line-height: 20px;

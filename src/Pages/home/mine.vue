@@ -5,15 +5,15 @@
       <span class="">Witte</span>
     </div>
     <div class="ptwo row">
-      <img src="" alt="">
+      <span class="iconfont icon-icon-test viewCardBoxBodyIconBlockIcon" style="color:#4bb3fc;font-size:34px;"></span>
       <span class="">手机授权</span>
     </div>
     <div class="ptwo row">
-      <img src="" alt="">
+      <span class="iconfont icon-pinpai viewCardBoxBodyIconBlockIcon" style="color:#ffbd30;font-size:34px;"></span>
       <span class="">绑定后台帐号</span>
     </div>
     <div class="ptwo row">
-      <img src="" alt="">
+      <span class="iconfont icon-qingchu viewCardBoxBodyIconBlockIcon" style="color:#ffbd30;font-size:34px;"></span>
       <span class="">清楚缓存</span>
     </div>
   </div>

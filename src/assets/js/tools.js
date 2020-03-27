@@ -14,8 +14,7 @@ tools.createURL = function(url,param){
 tools.createParms = function(param){
   let obj = {}
   obj.appid = base.gAppid
-  obj.token = '#R0RV5TD4JF7M'
-  // obj.token = tools.gToken()
+  obj.token = tools.gToken()
   if(param){
       for(var key in param){
           obj[key] = param[key]
@@ -52,7 +51,7 @@ tools.timer = function(){
   let year = myDate.getFullYear(); //获取完整的年份(4位,1970-????)
   let month = tools.formatTen(myDate.getMonth()+1); //获取当前月份(0-11,0代表1月)
   let date = myDate.getDate(); //获取当前日(1-31)
-  let hour = myDate.getHours(); //获取当前小时数(0-23)
+  let hour = tools.formatTen(myDate.getHours()); //获取当前小时数(0-23)
   let minute = tools.formatTen(myDate.getMinutes());
   // ////console.log(year, month, date, hour, minute)
   let dateStart = `${year}-${month}-${date}`;
@@ -61,7 +60,7 @@ tools.timer = function(){
   let timeEnd = `${hour}:${minute}`;
   let dataStart = `${dateStart} ${timeStart}`;
   let dataEnd = `${dateEnd} ${timeEnd}`;
-  let dataO = {y:year,m:month,d:date};
+  let dataO = {y:year,m:myDate.getMonth(),d:date};
   return {dateS:dataStart,dateE:dataEnd,dateO:dataO};
 };
 

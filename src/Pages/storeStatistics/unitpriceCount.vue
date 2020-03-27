@@ -3,8 +3,13 @@
     <div class="section-wrap">
       <div class="section">
         <div class="title" style="margin-bottom:20px">客单价统计</div>
-        <div class="canvas" style="height:400px">
-          <ve-histogram :data="chartData" :extend="extend"></ve-histogram>
+        <div
+          class
+          style="width:100%; width: 100%;box-sizing:border-box;overflow:scroll;white-space: nowrap;"
+        >
+          <div class="canvas" :style="'width:'+ cwidth +'px'" style="height:400px;display:inline-block">
+            <ve-histogram :style="'width:'+ cwidth +'px'" :data="chartData" :extend="extend" style="height:400px"></ve-histogram>
+          </div>
         </div>
       </div>
     </div>
@@ -14,7 +19,7 @@
 export default {
   name: "unitpriceCount",
   props: {
-    data: Array
+    data: Array,
   },
   data() {
     this.extend = {
@@ -29,18 +34,22 @@ export default {
     return {
       chartData: {
         columns: ["仓库名称", "客单价(元)"],
-        rows: []
-      }
+        rows: [],
+      },
+      cwidth:1500
     };
   },
   created() {
-    console.log(this.data);
+    console.log(this.data.length);
+    if(this.data.length>8){
+      this.cwidth = (750 + Number(this.data.length*100));
+    }
   },
   methods: {},
   watch: {
-    data () {
-        let data = this.data
-        this.chartData.rows = data;
+    data() {
+      let data = this.data;
+      this.chartData.rows = data;
     }
   }
 };

@@ -1,6 +1,7 @@
 import axios from 'axios'
 import qs from 'qs'
 import base from '@/assets/api/base'
+import tools from '@/assets/js/tools'
 
 import { Toast } from 'vant';
 
@@ -11,7 +12,7 @@ const service = axios.create({
 // 添加请求拦截器
 service.interceptors.request.use(
   config => {
-    config.headers["Authorization"] = "Bearer #R0RV5TD4JF7M";
+    config.headers["Authorization"] = "Bearer "+tools.gToken();
     config.headers["Content-Type"]= 'application/json';
     return config
   },

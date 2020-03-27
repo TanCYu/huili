@@ -25,8 +25,20 @@ export default {
     };
   },
   created() {
+    this.getToken()
   },
   methods: {
+    getToken(){
+      let pageUrl =  window.location.href;
+      pageUrl = pageUrl.replace("?", "&")
+      var searchParams = new URLSearchParams(pageUrl);
+      let token = searchParams.getAll("token");
+      if(token[0]){
+        localStorage.setItem('token',token[0])
+      }else{
+        localStorage.setItem('token','#9SHDHMVGU6GL')
+      }
+    }
   }
 };
 </script>

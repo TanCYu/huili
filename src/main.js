@@ -14,6 +14,7 @@ import './assets/fonts/iconfont.css';
 import VCharts from 'v-charts';
 Vue.use(VCharts);
 
+
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
